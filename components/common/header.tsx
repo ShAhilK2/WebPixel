@@ -4,6 +4,7 @@ import WebPixelLogo from "./webpixel-logo";
 import { Button } from "../ui/button";
 import {
   SignedIn,
+  SignedOut,
   SignInButton,
   SignUpButton,
   UserButton,
@@ -39,16 +40,18 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-4">
-          <SignInButton>
-            <Button variant={"secondary"} className="cursor-pointer">
-              Log In
-            </Button>
-          </SignInButton>
-          <SignUpButton>
-            <Button variant={"default"} className="cursor-pointer">
-              Get Started
-            </Button>
-          </SignUpButton>
+          <SignedOut>
+            <SignInButton>
+              <Button variant={"secondary"} className="cursor-pointer">
+                Log In
+              </Button>
+            </SignInButton>
+            <SignUpButton>
+              <Button variant={"default"} className="cursor-pointer">
+                Get Started
+              </Button>
+            </SignUpButton>
+          </SignedOut>
 
           <SignedIn>
             <UserButton />
