@@ -46,3 +46,25 @@ export async function addWebsite(domain: string) {
 
   return { success: true, website };
 }
+
+export async function getWebsites() {
+  const { insforge, user } = await getAuthenticatedClient();
+
+  if (!user) {
+    return { error: "Unauthenticated" };
+  }
+  const userId = user?.id;
+
+  const { data: websites, error } = await insforge.database
+    .from("websites")
+    .select("*")
+    .eq("user_id", userId)
+    .order("createdAt", { ascending: false });
+
+  if (error) {
+    console.error("InsForge DB error in getWebsites:", error);
+    return { error: "Failed to fetch websites" };
+  }
+
+  return { websites };
+}
