@@ -8,5 +8,7 @@ export async function getAuthenticatedClient() {
     edgeFunctionToken: token || undefined,
   });
 
+  console.log(insforge, user);
+
   return { insforge, user };
 }

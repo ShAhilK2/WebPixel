@@ -11,7 +11,7 @@
 
   if (!domain && !siteId) return
 
-  const ENDPOINT = "https://5r8ez8qq.insforge.site/api/collect"
+  const ENDPOINT = "/api/collect"
 
   const generateId = () => {
     const timestamp = Date.now().toString(36);
@@ -91,7 +91,7 @@
     }
   }
 
-  const stopHeatbeat = () => {
+  const stopHeartbeat = () => {
     if (heartbeat) {
       clearInterval(heartbeat);
       heartbeat = null
@@ -106,7 +106,7 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       activeTime += performance.now() - activeStart;
-      stopHeatbeat()
+      stopHeartbeat()
     } else {
       activeStart = performance.now()
       startHeartbeat()
