@@ -11,7 +11,7 @@
 
   if (!domain && !siteId) return
 
-  const ENDPOINT = "http://localhost:3000/api/collect"
+  const ENDPOINT = "https://5r8ez8qq.insforge.site/api/collect"
 
   const generateId = () => {
     const timestamp = Date.now().toString(36);
