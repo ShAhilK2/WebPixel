@@ -28,6 +28,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          src="http://localhost:3000/js/webpixel.js"
+          data-domain="localhost:3000"
+          data-site-id="P-AC_UIRRMBWLE4LQ6UXYFD"
+          defer
+        ></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

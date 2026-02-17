@@ -1,129 +1,109 @@
-import { getWebsites } from "@/action/website";
+"use client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
-import { cn } from "@/lib/utils";
+
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuItem,
-} from "../ui/dropdown-menu";
-import { Skeleton } from "../ui/skeleton";
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
-  ChevronDown,
-  Globe,
-  Check,
-  Plus,
-  XIcon,
-  Code,
-  Search,
-  Calendar,
   CalendarIcon,
+  Check,
+  ChevronDown,
+  Code,
+  Globe,
+  Plus,
+  Search,
+  XIcon,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Spinner } from "../ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import AddWebsiteDialog from "./add-website-dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   endOfDay,
-  set,
   startOfDay,
   startOfMonth,
   startOfYear,
   subDays,
-  subYears,
+  subMonths,
 } from "date-fns";
 import { InstallationGuide } from "./installation-guide";
+import { DateRangePreset } from "@/types/date-preset";
+
+import { getWebsites } from "@/action/website";
+import { getLiveVisitors } from "@/action/analytics";
 
 type Props = {
-  dateRange?: DateRange;
-  setDateRange: (range: DateRange) => void;
+  activePreset: DateRangePreset;
+  onPresetSelect: (preset: DateRangePreset) => void;
 };
-
-type DateRangePreset =
-  | "today"
-  | "7days"
-  | "30days"
-  | "monthToDate"
-  | "yearToDate"
-  | "last12Months";
 
 const presets: { key: DateRangePreset; label: string }[] = [
   { key: "today", label: "Today" },
-  { key: "7days", label: "Last 7 Days" },
-  { key: "30days", label: "Last 30 Days" },
+  { key: "7days", label: "Last 7 days" },
+  { key: "30days", label: "Last 30 days" },
   { key: "monthToDate", label: "Month to Date" },
   { key: "yearToDate", label: "Year to Date" },
-  { key: "last12Months", label: "Last 12 Months" },
+  { key: "last12Months", label: "Last 12 months" },
 ];
-const MainTopBar = ({ dateRange, setDateRange }: Props) => {
+
+const MainTopbar = ({ activePreset, onPresetSelect }: Props) => {
   const { websiteId } = useParams();
   const router = useRouter();
-  const [openWebsiteSelector, setOpenWebsiteSelector] = useState(false);
-  const [showInstallationGuide, setShowInstallationGuide] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [openWebsite, setOpenWebsite] = useState(false);
 
-  const [openDateRangePicker, setOpenDateRangePicker] = useState(false);
-
-  const [activePreset, setActivePreset] =
-    useState<DateRangePreset>("monthToDate");
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["website", websiteId],
+    queryKey: ["websites"],
     queryFn: async () => {
-      const response = await getWebsites();
-      if (response?.error) {
-        throw new Error(response.error);
-      }
-      return response.websites || [];
+      const res = await getWebsites();
+      console.log(res, "res");
+      if (res?.error) throw new Error(res.error);
+      return res.websites || [];
     },
+  });
+
+  const { data: liveVisitors, isPending } = useQuery({
+    queryKey: ["live-visitors", websiteId],
+    queryFn: async () => {
+      const res = await getLiveVisitors(websiteId as string);
+      return res.liveVisitors || 0;
+    },
+    refetchInterval: 30000,
+    enabled: !!websiteId,
   });
 
   const currentWebsite =
     data?.find((w: any) => w.id === websiteId) || data?.[0];
 
-  const handlePresetSelect = (presetkey: DateRangePreset) => {
-    const now = new Date();
-    let from: Date;
-    let to: Date = endOfDay(now);
-
-    switch (presetkey) {
-      case "today":
-        from = startOfDay(now);
-        break;
-      case "7days":
-        from = startOfDay(subDays(now, 7));
-        break;
-      case "30days":
-        from = startOfDay(subDays(now, 30));
-        break;
-      case "monthToDate":
-        from = startOfMonth(now);
-        break;
-      case "yearToDate":
-        from = startOfYear(now);
-        break;
-      case "last12Months":
-        from = startOfMonth(subYears(now, 12));
-        break;
-      default:
-        from = startOfMonth(now);
-        break;
-    }
-    setDateRange({ from, to });
-    setActivePreset(presetkey);
-    setOpenDateRangePicker(false);
+  const handlePresetSelect = (presetKey: DateRangePreset) => {
+    onPresetSelect(presetKey);
+    setOpen(false);
   };
 
   return (
     <>
-      <div className="w-full flex h-12 items-center justify-between gap-4">
-        {/* left */}
+      <div
+        className="w-ful flex h-12 items-center
+      justify-between gap-4
+      "
+      >
         <div className="flex items-center gap-4">
-          {/* Website Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               {isLoading ? (
@@ -176,7 +156,7 @@ const MainTopBar = ({ dateRange, setDateRange }: Props) => {
               {data?.length === 0 && <div>No Websites found</div>}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onSelect={() => setOpen(true)}
+                onSelect={() => setOpenWebsite(true)}
                 className="cursor-pointer gap-2 text-primary focus:text-primary focus:bg-primary/5 font-medium"
               >
                 <Plus className="szie-4" />
@@ -187,42 +167,52 @@ const MainTopBar = ({ dateRange, setDateRange }: Props) => {
 
           {/* Current Visitors */}
           <div className="flex items-center gap-2 text-sm">
-            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-foreground">0 current visitors</span>
+            <div
+              className="size-2 rounded-full
+           bg-green-500 animate-pulse"
+            />
+
+            {isPending ? (
+              <Skeleton className="h-4 w-12" />
+            ) : (
+              <span className="text-foreground">
+                {liveVisitors || 0} current vistors
+              </span>
+            )}
           </div>
         </div>
 
-        {/* right */}
         <div className="flex items-center gap-2">
           <Button
-            variant={showInstallationGuide ? "secondary" : "ghost"}
-            onClick={() => setShowInstallationGuide(!showInstallationGuide)}
             size="sm"
+            variant={showInstallGuide ? "secondary" : "ghost"}
+            onClick={() => setShowInstallGuide(!showInstallGuide)}
           >
-            {showInstallationGuide ? (
+            {showInstallGuide ? (
               <XIcon className="size-4" />
             ) : (
               <Code className="size-4" />
             )}
-            <span>{showInstallationGuide ? "Close" : "Install Script"}</span>
+            <span>{showInstallGuide ? "Close" : "Install script"}</span>
           </Button>
-          <span className="flex items-center gap-2 text-foreground ">
-            <Search />
+
+          <span className="flex items-center text-foreground gap-2">
+            <Search className="size-4" />
             Filter
           </span>
-          <Popover
-            open={openDateRangePicker}
-            onOpenChange={setOpenDateRangePicker}
-          >
+
+          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
-                className="h-9 border-0 bg-secondary text-foreground!"
-                variant={"ghost"}
+                variant="ghost"
+                className=" h-9 border-0
+                bg-secondary! text-foreground!
+                "
               >
                 <CalendarIcon className="size-4" />
                 <span>
                   {presets?.find((p) => p.key === activePreset)?.label ||
-                    "Select preset"}
+                    "Select Range"}
                 </span>
                 <ChevronDown className="size-4" />
               </Button>
@@ -251,18 +241,16 @@ const MainTopBar = ({ dateRange, setDateRange }: Props) => {
         </div>
       </div>
 
-      <AddWebsiteDialog
-        open={openWebsiteSelector}
-        onOpenChange={setOpenWebsiteSelector}
-      />
-      {showInstallationGuide && (
+      <AddWebsiteDialog open={openWebsite} onOpenChange={setOpenWebsite} />
+
+      {showInstallGuide && (
         <InstallationGuide
           domain={currentWebsite?.domain}
-          siteId={currentWebsite?.id}
+          siteId={currentWebsite?.site_id}
         />
       )}
     </>
   );
 };
 
-export default MainTopBar;
+export default MainTopbar;
