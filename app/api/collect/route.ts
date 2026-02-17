@@ -77,8 +77,6 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-forwarded-for")?.split(",")?.[0] ||
       req.headers.get("x-real-ip");
 
-    console.log(ip, "ip");
-
     let country = "";
     let countryCode = "";
     let region = "";
